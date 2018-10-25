@@ -33,24 +33,24 @@ namespace MigrateRelationship
         {
             this.context.Dispose();
         }
-        public static ScanItemResult AssembleSPItemInfo(string webUrl, List list, ListItem item)
+        public static ScanItemResult AssembleSPItemInfo(ConfigInfo configInfo, List list, ListItem item)
         {
             ScanItemResult result = new ScanItemResult();
-            result.ItemUrl = webUrl.TrimEnd('/') + "/" + list.Title + @"/Forms/DispForm.aspx?ID=" + item.Id;
-            result.HPTrimId = item[Constants.RecordId] == null ? "" : item[Constants.RecordId].ToString();
-            result.OriginalValue = item[Constants.UpdateColumnName] == null ? "" : item[Constants.UpdateColumnName].ToString();
+            result.ItemUrl = configInfo.SPSiteUrl.TrimEnd('/') + "/" + list.Title + @"/Forms/DispForm.aspx?ID=" + item.Id;
+            result.HPTrimId = item[configInfo.PrimaryKey] == null ? "" : item[configInfo.PrimaryKey].ToString();
+            result.OriginalValue = item[configInfo.ColumnName] == null ? "" : item[configInfo.ColumnName].ToString();
             result.ItemId = item.Id.ToString();
             return result;
         }
 
-        public ResultInfo UpdateItemWithInfo(string itemId, string info)
+        public ResultInfo UpdateItemWithInfo(string itemId, string info, ConfigInfo configInfo)
         {
             ListItem item = this.list.GetItemById(itemId);
             context.Load(item);
             context.ExecuteQuery();
             try
             {
-                item[Constants.UpdateColumnName] = info;
+                item[configInfo.ColumnName] = info;
                 item.SystemUpdate();
                 Console.WriteLine(item.Id);
                 this.context.ExecuteQuery();
@@ -65,7 +65,7 @@ namespace MigrateRelationship
             }
         }
 
-        internal static string RetrieveItems(List<HPResultInfo> infos, List list)
+        internal static string RetrieveItems(ConfigInfo config, List<HPResultInfo> infos, List list)
         {
             List<HPResultInfo> infosCopy = new List<HPResultInfo>();
             foreach (HPResultInfo info in infos)
@@ -75,7 +75,7 @@ namespace MigrateRelationship
                     "<Query>" +
                     "<Where>" +
                                 "<Eq>" +
-                                    "<FieldRef Name=\"" + Constants.RecordId + "\" />" +
+                                    "<FieldRef Name=\"" + config.PrimaryKey + "\" />" +
                                     "<Value Type=\"Text\">" + info.HPId + "</Value>" +
                                  "</Eq>" +
                     "</Where>" +

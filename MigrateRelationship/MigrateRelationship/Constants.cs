@@ -8,10 +8,6 @@ namespace MigrateRelationship
 {
     class Constants
     {
-        public static readonly string RecordId = "HPTrimID";
-        public static readonly string RecordNumber = "";
-        public static readonly string UpdateColumnName = "RColumn";
-
         public static readonly string SourceTableTitle = "source";
         public static readonly string JobTableTitle = "JobTable";
         public static readonly string OriginalTableTitle = "OriginalTable";

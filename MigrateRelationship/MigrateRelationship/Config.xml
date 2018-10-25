@@ -1,7 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <Root>
+  <SPColumnName>
+    <PrimaryKey Value="HPTrimID" />
+    <ColumnName Value="RColumn" />
+  </SPColumnName>
   <JobInfo>
-    <ScanItemJob Value="true" />
+    <ScanItemJob Value="false" />
   </JobInfo>
   <AccountInfo>
     <SiteUrl Value ="https://acsdev365.sharepoint.com/sites/hshan/testSite"/>

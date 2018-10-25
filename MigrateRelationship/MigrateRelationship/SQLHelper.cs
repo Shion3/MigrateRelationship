@@ -66,7 +66,7 @@ namespace MigrateRelationship
             Console.WriteLine("Finish check database {0}", tableName);
         }
 
-        internal List<ResultInfo> SearchItems(string jobId, SPUtility sputility, string listTitle)
+        internal List<ResultInfo> SearchItems(string jobId, SPUtility sputility, ConfigInfo configInfo)
         {
             List<ResultInfo> results = new List<ResultInfo>();
             string sqlStr = string.Format("select * from {0} where JobId='{1}'", Constants.OriginalTableTitle, jobId);
@@ -79,7 +79,7 @@ namespace MigrateRelationship
                     try
                     {
                         string updateValue = result["RelatedValue"].ToString();
-                        ResultInfo resultInfo = sputility.UpdateItemWithInfo(itemId, updateValue);
+                        ResultInfo resultInfo = sputility.UpdateItemWithInfo(itemId, updateValue, configInfo);
                         results.Add(resultInfo);
                     }
                     catch (Exception e)

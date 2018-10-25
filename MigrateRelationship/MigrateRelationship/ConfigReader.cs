@@ -19,7 +19,9 @@ namespace MigrateRelationship
         public string DBUserName;
         public string DBPassword;
         public bool JobType;
-        public ConfigInfo(string siteUrl, string listTitle, string spUserName, string spPassword, string dbServer, string dbDatabaseName, bool windowsMode, string dbUsername, string dbPassword, bool jobType)
+        public string PrimaryKey;
+        public string ColumnName;
+        public ConfigInfo(string siteUrl, string listTitle, string spUserName, string spPassword, string dbServer, string dbDatabaseName, bool windowsMode, string dbUsername, string dbPassword, bool jobType,string primaryKey,string columnName)
         {
             this.SPSiteUrl = siteUrl;
             this.SPListTitle = listTitle;
@@ -31,6 +33,8 @@ namespace MigrateRelationship
             this.DBUserName = dbUsername;
             this.DBPassword = dbPassword;
             this.JobType = jobType;
+            this.PrimaryKey = primaryKey;
+            this.ColumnName = columnName;
         }
     }
     class ConfigReader
@@ -56,7 +60,9 @@ namespace MigrateRelationship
                 bool.Parse(this.ele.SelectSingleNode("/Root/DatabaseInfo/IntegratedWindows").Attributes["Value"].Value),
                 this.ele.SelectSingleNode("/Root/DatabaseInfo/UserName").Attributes["Value"].Value,
                 this.ele.SelectSingleNode("/Root/DatabaseInfo/PassWord").Attributes["Value"].Value,
-            bool.Parse(this.ele.SelectSingleNode("/Root/JobInfo/ScanItemJob").Attributes["Value"].Value))
+            bool.Parse(this.ele.SelectSingleNode("/Root/JobInfo/ScanItemJob").Attributes["Value"].Value),
+            this.ele.SelectSingleNode("/Root/SPColumnName/PrimaryKey").Attributes["Value"].Value,
+            this.ele.SelectSingleNode("/Root/SPColumnName/ColumnName").Attributes["Value"].Value)
             { };
         }
     }

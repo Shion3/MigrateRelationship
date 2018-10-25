@@ -67,7 +67,7 @@ namespace MigrateRelationship
             {
                 string jobId = RetrieveJobId(sqlHelper);
                 sputility = new SPUtility(configInfo);
-                List<ResultInfo> results = sqlHelper.SearchItems(jobId, sputility, configInfo.SPListTitle);
+                List<ResultInfo> results = sqlHelper.SearchItems(jobId, sputility, configInfo);
                 foreach (ResultInfo result in results)
                 {
                     sqlHelper.InsertReportInfo(result, currentJobId, jobId);
@@ -108,18 +108,21 @@ namespace MigrateRelationship
                 context.Load(list);
                 context.ExecuteQuery();
                 Console.WriteLine(list.Title);
-                CamlQuery query = new CamlQuery() { };
-                ListItemCollection items = list.GetItems(query);
-                context.Load(items);
-                context.ExecuteQuery();
+
+                List<ListItem> items = RetrieveItems(context, list);
+
+                //CamlQuery query = new CamlQuery() { };
+                //ListItemCollection items = list.GetItems(query);
+                //context.Load(items);
+                //context.ExecuteQuery();
 
                 foreach (ListItem item in items)
                 {
                     try
                     {
-                        ScanItemResult itemResult = SPUtility.AssembleSPItemInfo(configInfo.SPSiteUrl, list, item);
+                        ScanItemResult itemResult = SPUtility.AssembleSPItemInfo(configInfo, list, item);
                         List<HPResultInfo> result = sqlHelper.RetrieveSourceDBWithInfo(itemResult, Constants.SourceTableTitle);
-                        string relateValue = SPUtility.RetrieveItems(result, list);
+                        string relateValue = SPUtility.RetrieveItems(configInfo, result, list);
                         sqlHelper.InsertItemInfo(itemResult, jobId, context.Url, list.Title, relateValue);
                         //记录原始数据,计算更新数据添加到OriginalTable中
                         if (item.FileSystemObjectType == FileSystemObjectType.File)
@@ -128,7 +131,7 @@ namespace MigrateRelationship
                         }
                         else if (item.FileSystemObjectType == FileSystemObjectType.Folder)
                         {
-                            RetrieveFolder(context, list, item, sqlHelper, jobId);
+                            RetrieveFolder(context, list, item, sqlHelper, jobId, configInfo);
                         }
                     }
                     catch (Exception e)
@@ -137,6 +140,34 @@ namespace MigrateRelationship
                     }
                 }
             }
+        }
+
+        private static List<ListItem> RetrieveItems(ClientContext context, List list)
+        {
+            List<ListItem> itemCollection = new List<ListItem>();
+            CamlQuery query = new CamlQuery() { };
+            query.ViewXml = "<View><RowLimit>500</RowLimit></View>";
+
+            ListItemCollection items = list.GetItems(query);
+            context.Load(items);
+            context.ExecuteQuery();
+            query.ListItemCollectionPosition = items.ListItemCollectionPosition;
+            foreach (ListItem item in items)
+            {
+                itemCollection.Add(item);
+            }
+            while (query.ListItemCollectionPosition != null)
+            {
+                items = list.GetItems(query);
+                context.Load(items);
+                context.ExecuteQuery();
+                query.ListItemCollectionPosition = items.ListItemCollectionPosition;
+                foreach (ListItem item in items)
+                {
+                    itemCollection.Add(item);
+                }
+            }
+            return itemCollection;
         }
 
         private static string InitiateJobId(SQLHelper sqlHelper, JobType jobType)
@@ -154,7 +185,7 @@ namespace MigrateRelationship
             sqlHelper.ExecuteNonQuery(sqlStr);
         }
 
-        private static void RetrieveFolder(ClientContext context, List list, ListItem item, SQLHelper sqlHelper, string jobId)
+        private static void RetrieveFolder(ClientContext context, List list, ListItem item, SQLHelper sqlHelper, string jobId, ConfigInfo config)
         {
             Folder folder = item.Folder;
             context.Load(folder);
@@ -168,9 +199,9 @@ namespace MigrateRelationship
             {
                 try
                 {
-                    ScanItemResult itemResult = SPUtility.AssembleSPItemInfo(context.Url, list, current);
+                    ScanItemResult itemResult = SPUtility.AssembleSPItemInfo(config, list, current);
                     List<HPResultInfo> result = sqlHelper.RetrieveSourceDBWithInfo(itemResult, Constants.SourceTableTitle);
-                    string relateValue = SPUtility.RetrieveItems(result, list);
+                    string relateValue = SPUtility.RetrieveItems(config, result, list);
                     sqlHelper.InsertItemInfo(itemResult, jobId, context.Url, list.Title, relateValue);
                     if (current.FileSystemObjectType == FileSystemObjectType.File)
                     {
@@ -178,7 +209,7 @@ namespace MigrateRelationship
                     }
                     else if (current.FileSystemObjectType == FileSystemObjectType.Folder)
                     {
-                        RetrieveFolder(context, list, current, sqlHelper, jobId);
+                        RetrieveFolder(context, list, current, sqlHelper, jobId, config);
                     }
                 }
                 catch (Exception e)
