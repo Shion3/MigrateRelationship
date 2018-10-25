@@ -30,6 +30,7 @@ namespace MigrateRelationship
                 case TableType.ReportTable: tableName = Constants.ReportTableTitle; break;
                     //case TableType.UpdateTable: tableName = Constants.UpdateTableTitle; break;
             }
+            Console.WriteLine("Start check database {0}", tableName);
             string sqlStr = string.Format("select * from sys.tables where name='{0}'", tableName);
             this.com.CommandText = sqlStr;
             bool exist = true;
@@ -62,6 +63,7 @@ namespace MigrateRelationship
                         //    break;
                 }
             }
+            Console.WriteLine("Finish check database {0}", tableName);
         }
 
         internal List<ResultInfo> SearchItems(string jobId, SPUtility sputility, string listTitle)

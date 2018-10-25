@@ -33,6 +33,7 @@ namespace MigrateRelationship
                     sqlHelper.CheckDataTable(TableType.JobTable);
                     sqlHelper.CheckDataTable(TableType.OriginalTable);
                     string jobId = InitiateJobId(sqlHelper, JobType.ScanItemJob);
+                    Console.WriteLine("Start load Sharepoint info...");
                     ScanItems(configInfo, sqlHelper, jobId);
                     UpdateJobId(jobId, sqlHelper);
                 }
@@ -41,6 +42,7 @@ namespace MigrateRelationship
                     sqlHelper.CheckDataTable(TableType.JobTable);
                     sqlHelper.CheckDataTable(TableType.ReportTable);
                     string jobId = InitiateJobId(sqlHelper, JobType.UpdateItemJob);
+                    Console.WriteLine("Start load Sharepoint info...");
                     UpdateItems(configInfo, sqlHelper, jobId);
                     UpdateJobId(jobId, sqlHelper);
                 }
