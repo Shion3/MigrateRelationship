@@ -97,11 +97,18 @@ namespace MigrateRelationship
 
         public void InsertItemInfo(ScanItemResult itemInfo, string jobId, string webUrl, string listTitle, string linkValue)
         {
-            string str = string.Format("insert into {0} ([JobId],[HPTrimID],[ItemUrl],[SiteUrl],[ListTitle],[OriginalRelatedValue],[RelatedValue],[ItemId]) values ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}')", Constants.OriginalTableTitle, jobId, itemInfo.HPTrimId,
-                itemInfo.ItemUrl, webUrl, listTitle, itemInfo.OriginalValue, linkValue, itemInfo.ItemId);
-            this.com.CommandText = str;
-            this.com.ExecuteNonQuery();
-            Program.logger.Info("Insert item info to database. Item id: {0}, Old value: {1}, New value: {2}.", itemInfo.ItemId, itemInfo.OriginalValue, linkValue);
+            try
+            {
+                string str = string.Format("insert into {0} ([JobId],[HPTrimID],[ItemUrl],[SiteUrl],[ListTitle],[OriginalRelatedValue],[RelatedValue],[ItemId]) values ('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}')", Constants.OriginalTableTitle, jobId, itemInfo.HPTrimId,
+                    itemInfo.ItemUrl, webUrl, listTitle, itemInfo.OriginalValue, linkValue, itemInfo.ItemId);
+                this.com.CommandText = str;
+                this.com.ExecuteNonQuery();
+                Program.logger.Info("Insert item info to database. Item id: {0}, Old value: {1}, New value: {2}.", itemInfo.ItemId, itemInfo.OriginalValue, linkValue);
+            }
+            catch (Exception e)
+            {
+                Program.logger.Warn("Insert item info to database failed. Item id: {0}, Old value: {1}, New value: {2}, Exception: {3}.", itemInfo.ItemId, itemInfo.OriginalValue, linkValue, e.Message);
+            }
         }
         public void InsertReportInfo(ResultInfo resultInfo, string jobId, string scanJobId)
         {
