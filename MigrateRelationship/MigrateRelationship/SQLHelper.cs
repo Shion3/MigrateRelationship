@@ -30,6 +30,7 @@ namespace MigrateRelationship
                 case TableType.ReportTable: tableName = Constants.ReportTableTitle; break;
                     //case TableType.UpdateTable: tableName = Constants.UpdateTableTitle; break;
             }
+            Program.logger.Debug("Start check database {0}", tableName);
             Console.WriteLine("Start check database {0}", tableName);
             string sqlStr = string.Format("select * from sys.tables where name='{0}'", tableName);
             this.com.CommandText = sqlStr;
@@ -64,6 +65,7 @@ namespace MigrateRelationship
                 }
             }
             Console.WriteLine("Finish check database {0}", tableName);
+            Program.logger.Debug("Check database {0} over.", tableName);
         }
 
         internal List<ResultInfo> SearchItems(string jobId, SPUtility sputility, ConfigInfo configInfo)
@@ -79,12 +81,14 @@ namespace MigrateRelationship
                     try
                     {
                         string updateValue = result["RelatedValue"].ToString();
+                        Program.logger.Debug("Return the item info. Item id:{0}, new value: {1}.", itemId, updateValue);
                         ResultInfo resultInfo = sputility.UpdateItemWithInfo(itemId, updateValue, configInfo);
                         results.Add(resultInfo);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(string.Format("Error: {0}, ItemId: {1}", e.Message, itemId));
+                        Program.logger.Warn("Update item fialed. Item id: {0}, Exception :{1}", itemId, e.Message);
                     }
                 }
             }
@@ -97,12 +101,21 @@ namespace MigrateRelationship
                 itemInfo.ItemUrl, webUrl, listTitle, itemInfo.OriginalValue, linkValue, itemInfo.ItemId);
             this.com.CommandText = str;
             this.com.ExecuteNonQuery();
+            Program.logger.Info("Insert item info to database. Item id: {0}, Old value: {1}, New value: {2}.", itemInfo.ItemId, itemInfo.OriginalValue, linkValue);
         }
         public void InsertReportInfo(ResultInfo resultInfo, string jobId, string scanJobId)
         {
-            string str = string.Format("insert into {0} ([ScanJobId],[JobId],[ListUrl],[ItemId],[Result],[Message]) values ('{1}','{2}','{3}','{4}','{5}','{6}')", Constants.ReportTableTitle, scanJobId, jobId, resultInfo.ListUrl, resultInfo.ItemId, resultInfo.Result, resultInfo.Message);
-            this.com.CommandText = str;
-            this.com.ExecuteNonQuery();
+            Program.logger.Debug("Insert report to report database. item id: {0}", resultInfo.ItemId);
+            try
+            {
+                string str = string.Format("insert into {0} ([ScanJobId],[JobId],[ListUrl],[ItemId],[Result],[Message]) values ('{1}','{2}','{3}','{4}','{5}','{6}')", Constants.ReportTableTitle, scanJobId, jobId, resultInfo.ListUrl, resultInfo.ItemId, resultInfo.Result, resultInfo.Message);
+                this.com.CommandText = str;
+                this.com.ExecuteNonQuery();
+            }
+            catch (Exception e)
+            {
+                Program.logger.Warn("Insert report to report database failed. item id: {0}, Exception: {1}", resultInfo.ItemId, e.Message);
+            }
         }
 
         public void ExecuteNonQuery(string str)
@@ -124,6 +137,7 @@ namespace MigrateRelationship
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                Program.logger.Error(e.Message);
                 return null;
             }
         }
@@ -150,6 +164,7 @@ namespace MigrateRelationship
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
+                Program.logger.Error(e.Message);
                 return null;
             }
         }

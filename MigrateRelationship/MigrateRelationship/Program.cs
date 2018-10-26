@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Security;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,13 +12,16 @@ namespace MigrateRelationship
 {
     class Program
     {
+        public static LoggerHandler logger = new LoggerHandler(MethodBase.GetCurrentMethod().DeclaringType);
         static void Main(string[] args)
         {
             SQLHelper sqlHelper = null;
             try
             {
+                Program.logger.Debug("Start read config.xml");
                 ConfigReader configHelper = new ConfigReader("Config.xml");
                 ConfigInfo configInfo = configHelper.GetConfigInfo();
+                Program.logger.Debug("End read config.xml");
                 if (configInfo.DBWindowsMode)
                 {
                     sqlHelper = new SQLHelper(string.Format("server={0};database={1};integrated security=SSPI", configInfo.DBServer, configInfo.DBDatabaseName));
@@ -29,6 +33,7 @@ namespace MigrateRelationship
                 //true scan item,false update item
                 if (configInfo.JobType)
                 {
+                    Program.logger.Debug("Start scan job.");
                     //生成并添加jobId到数据库中JobTable
                     sqlHelper.CheckDataTable(TableType.JobTable);
                     sqlHelper.CheckDataTable(TableType.OriginalTable);
@@ -36,26 +41,32 @@ namespace MigrateRelationship
                     Console.WriteLine("Start load Sharepoint info...");
                     ScanItems(configInfo, sqlHelper, jobId);
                     UpdateJobId(jobId, sqlHelper);
+                    Program.logger.Debug("End scan job.");
                 }
                 else
                 {
+                    Program.logger.Debug("Start update job.");
                     sqlHelper.CheckDataTable(TableType.JobTable);
                     sqlHelper.CheckDataTable(TableType.ReportTable);
                     string jobId = InitiateJobId(sqlHelper, JobType.UpdateItemJob);
                     Console.WriteLine("Start load Sharepoint info...");
                     UpdateItems(configInfo, sqlHelper, jobId);
                     UpdateJobId(jobId, sqlHelper);
+                    Program.logger.Debug("End update job.");
                 }
             }
             catch (Exception e)
             {
                 Console.WriteLine("Warning: {0}", e.Message);
+                Program.logger.Error("Warning: {0}", e.Message);
             }
             finally
             {
                 sqlHelper.Close();
                 Console.WriteLine("");
                 Console.WriteLine("Job Complete. Please enter any key to exist.");
+                Program.logger.Debug("Job finished.");
+                Program.logger.Dispose();
                 Console.ReadKey();
             }
         }
@@ -76,6 +87,7 @@ namespace MigrateRelationship
             catch (Exception e)
             {
                 Console.WriteLine("Update Itmes Warning : {0}", e.Message);
+                Program.logger.Error("Update items Warning : {0}", e.Message);
             }
             finally
             {
@@ -88,8 +100,11 @@ namespace MigrateRelationship
 
         private static string RetrieveJobId(SQLHelper sqlHelper)
         {
+            Program.logger.Debug("Retrieve the lastest update job id.");
             string sqlStr = string.Format("select JobId from {0} where JobType='{1}' and EndTime is not null order by StartTime desc", Constants.JobTableTitle, JobType.ScanItemJob);
-            return sqlHelper.SearchJobId(sqlStr);
+            string jobId = sqlHelper.SearchJobId(sqlStr);
+            Program.logger.Debug("Finish retrieve the lastest update job id. {0}", jobId);
+            return jobId;
         }
 
         private static void ScanItems(ConfigInfo configInfo, SQLHelper sqlHelper, string jobId)
@@ -111,18 +126,13 @@ namespace MigrateRelationship
 
                 List<ListItem> items = RetrieveItems(context, list);
 
-                //CamlQuery query = new CamlQuery() { };
-                //ListItemCollection items = list.GetItems(query);
-                //context.Load(items);
-                //context.ExecuteQuery();
-
                 foreach (ListItem item in items)
                 {
                     try
                     {
                         ScanItemResult itemResult = SPUtility.AssembleSPItemInfo(configInfo, list, item);
                         List<HPResultInfo> result = sqlHelper.RetrieveSourceDBWithInfo(itemResult, Constants.SourceTableTitle);
-                        string relateValue = SPUtility.RetrieveItems(configInfo, result, list);
+                        string relateValue = SPUtility.RetrieveItemsCombinNewVlaue(configInfo, result, list);
                         sqlHelper.InsertItemInfo(itemResult, jobId, context.Url, list.Title, relateValue);
                         //记录原始数据,计算更新数据添加到OriginalTable中
                         if (item.FileSystemObjectType == FileSystemObjectType.File)
@@ -137,17 +147,22 @@ namespace MigrateRelationship
                     catch (Exception e)
                     {
                         Console.WriteLine(string.Format("Warning: {0}, ItemId: {1}", e.Message, item.Id));
+                        Program.logger.Warn("Warning: {0}, ItemId: {1}", e.Message, item.Id);
                     }
                 }
             }
         }
 
-        private static List<ListItem> RetrieveItems(ClientContext context, List list)
+        private static List<ListItem> RetrieveItems(ClientContext context, List list, string folderUrl = null)
         {
+            Program.logger.Debug("Retrieve sharepoint items from {0}", folderUrl == null ? "Root Folder" : folderUrl);
             List<ListItem> itemCollection = new List<ListItem>();
             CamlQuery query = new CamlQuery() { };
             query.ViewXml = "<View><RowLimit>500</RowLimit></View>";
-
+            if (folderUrl != null)
+            {
+                query.FolderServerRelativeUrl = folderUrl;
+            }
             ListItemCollection items = list.GetItems(query);
             context.Load(items);
             context.ExecuteQuery();
@@ -174,6 +189,7 @@ namespace MigrateRelationship
         {
             DateTime now = DateTime.Now;
             string jobId = now.ToString("yyyyMMddHHmmss");
+            Program.logger.Debug("Insert job id to job table. JobId: {0}", jobId);
             string sqlStr = string.Format("insert into {0} (JobId,StartTime,JobType) values ('{1}','{2}','{3}')", Constants.JobTableTitle, jobId, now, jobType);
             sqlHelper.ExecuteNonQuery(sqlStr);
             return jobId;
@@ -190,18 +206,20 @@ namespace MigrateRelationship
             Folder folder = item.Folder;
             context.Load(folder);
             context.ExecuteQuery();
-            CamlQuery query = new CamlQuery() { };
-            query.FolderServerRelativeUrl = folder.ServerRelativeUrl;
-            ListItemCollection items = list.GetItems(query);
-            context.Load(items);
-            context.ExecuteQuery();
+            //CamlQuery query = new CamlQuery() { };
+            //query.FolderServerRelativeUrl = folder.ServerRelativeUrl;
+            //ListItemCollection items = list.GetItems(query);
+            //context.Load(items);
+            //context.ExecuteQuery();
+            List<ListItem> items = RetrieveItems(context, list, folder.ServerRelativeUrl);
+
             foreach (ListItem current in items)
             {
                 try
                 {
                     ScanItemResult itemResult = SPUtility.AssembleSPItemInfo(config, list, current);
                     List<HPResultInfo> result = sqlHelper.RetrieveSourceDBWithInfo(itemResult, Constants.SourceTableTitle);
-                    string relateValue = SPUtility.RetrieveItems(config, result, list);
+                    string relateValue = SPUtility.RetrieveItemsCombinNewVlaue(config, result, list);
                     sqlHelper.InsertItemInfo(itemResult, jobId, context.Url, list.Title, relateValue);
                     if (current.FileSystemObjectType == FileSystemObjectType.File)
                     {
@@ -215,6 +233,7 @@ namespace MigrateRelationship
                 catch (Exception e)
                 {
                     Console.WriteLine(string.Format("Warning: {0}, ItemId: {1}", e.Message, current.Id));
+                    Program.logger.Warn("Warning: {0}, ItemId: {1}", e.Message, current.Id);
                 }
             }
         }

@@ -55,17 +55,19 @@ namespace MigrateRelationship
                 Console.WriteLine(item.Id);
                 this.context.ExecuteQuery();
                 ResultInfo result = new ResultInfo(item.Context.Url, item.Id.ToString(), "Success", "");
+                Program.logger.Info("Update item successful. Item Id: {0}.", item.Id);
                 return result;
             }
             catch (Exception e)
             {
                 Console.WriteLine(string.Format("Warning: Update error. item id: {0}", e.Message));
+                Program.logger.Warn("Update item failed. Item Id: {0}.", item.Id);
                 ResultInfo result = new ResultInfo(item.Context.Url, item.Id.ToString(), "Error", e.Message);
                 return result;
             }
         }
 
-        internal static string RetrieveItems(ConfigInfo config, List<HPResultInfo> infos, List list)
+        internal static string RetrieveItemsCombinNewVlaue(ConfigInfo config, List<HPResultInfo> infos, List list)
         {
             List<HPResultInfo> infosCopy = new List<HPResultInfo>();
             foreach (HPResultInfo info in infos)
