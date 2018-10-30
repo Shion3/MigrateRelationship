@@ -121,7 +121,7 @@ namespace MigrateRelationship
                 context.Credentials = new SharePointOnlineCredentials(configInfo.SPUserName, secureString);
                 List list = context.Web.Lists.GetByTitle(configInfo.SPListTitle);
                 context.Load(list);
-                context.ExecuteQuery();
+                SPUtility.ExecuteQueryWithIncrementalRetry(context);
                 Console.WriteLine(list.Title);
 
                 List<ListItem> items = RetrieveItems(context, list);
@@ -153,19 +153,20 @@ namespace MigrateRelationship
             }
         }
 
+
         private static List<ListItem> RetrieveItems(ClientContext context, List list, string folderUrl = null)
         {
             Program.logger.Debug("Retrieve sharepoint items from {0}", folderUrl == null ? "Root Folder" : folderUrl);
             List<ListItem> itemCollection = new List<ListItem>();
             CamlQuery query = new CamlQuery() { };
-            query.ViewXml = "<View><RowLimit>500</RowLimit></View>";
+            query.ViewXml = "<View><RowLimit>4000</RowLimit></View>";
             if (folderUrl != null)
             {
                 query.FolderServerRelativeUrl = folderUrl;
             }
             ListItemCollection items = list.GetItems(query);
             context.Load(items);
-            context.ExecuteQuery();
+            SPUtility.ExecuteQueryWithIncrementalRetry(context);
             query.ListItemCollectionPosition = items.ListItemCollectionPosition;
             foreach (ListItem item in items)
             {
@@ -175,7 +176,7 @@ namespace MigrateRelationship
             {
                 items = list.GetItems(query);
                 context.Load(items);
-                context.ExecuteQuery();
+                SPUtility.ExecuteQueryWithIncrementalRetry(context);
                 query.ListItemCollectionPosition = items.ListItemCollectionPosition;
                 foreach (ListItem item in items)
                 {
@@ -205,12 +206,7 @@ namespace MigrateRelationship
         {
             Folder folder = item.Folder;
             context.Load(folder);
-            context.ExecuteQuery();
-            //CamlQuery query = new CamlQuery() { };
-            //query.FolderServerRelativeUrl = folder.ServerRelativeUrl;
-            //ListItemCollection items = list.GetItems(query);
-            //context.Load(items);
-            //context.ExecuteQuery();
+            SPUtility.ExecuteQueryWithIncrementalRetry(context);
             List<ListItem> items = RetrieveItems(context, list, folder.ServerRelativeUrl);
 
             foreach (ListItem current in items)
