@@ -100,10 +100,10 @@ namespace MigrateRelationship
 
         private static string RetrieveJobId(SQLHelper sqlHelper)
         {
-            Program.logger.Debug("Retrieve the lastest update job id.");
+            Program.logger.Debug("Retrieve the lastest scan job id.");
             string sqlStr = string.Format("select JobId from {0} where JobType='{1}' and EndTime is not null order by StartTime desc", Constants.JobTableTitle, JobType.ScanItemJob);
             string jobId = sqlHelper.SearchJobId(sqlStr);
-            Program.logger.Debug("Finish retrieve the lastest update job id. {0}", jobId);
+            Program.logger.Debug("Finish retrieve the lastest scan job id. {0}", jobId);
             return jobId;
         }
 
