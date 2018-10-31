@@ -54,7 +54,7 @@ namespace MigrateRelationship
                 item.SystemUpdate();
                 Console.WriteLine(item.Id);
                 SPUtility.ExecuteQueryWithIncrementalRetry(context);
-                ResultInfo result = new ResultInfo(item.Context.Url, item.Id.ToString(), "Success", "");
+                ResultInfo result = new ResultInfo(item.Id.ToString(), "Success", "");
                 Program.logger.Info("Update item successful. Item Id: {0}.", item.Id);
                 return result;
             }
@@ -62,7 +62,7 @@ namespace MigrateRelationship
             {
                 Console.WriteLine(string.Format("Warning: Update error. item id: {0}", e.Message));
                 Program.logger.Warn("Update item failed. Item Id: {0}.", item.Id);
-                ResultInfo result = new ResultInfo(item.Context.Url, item.Id.ToString(), "Error", e.Message);
+                ResultInfo result = new ResultInfo(item.Id.ToString(), "Error", e.Message);
                 return result;
             }
         }

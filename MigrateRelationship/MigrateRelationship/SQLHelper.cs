@@ -115,7 +115,7 @@ namespace MigrateRelationship
             Program.logger.Debug("Insert report to report database. item id: {0}", resultInfo.ItemId);
             try
             {
-                string str = string.Format("insert into {0} ([ScanJobId],[JobId],[ListUrl],[ItemId],[Result],[Message]) values ('{1}','{2}','{3}','{4}','{5}','{6}')", Constants.ReportTableTitle, scanJobId, jobId, resultInfo.ListUrl, resultInfo.ItemId, resultInfo.Result, resultInfo.Message);
+                string str = string.Format("insert into {0} ([ScanJobId],[JobId],[ItemId],[Result],[Message]) values ('{1}','{2}','{3}','{4}','{5}')", Constants.ReportTableTitle, scanJobId, jobId, resultInfo.ItemId, resultInfo.Result, resultInfo.Message);
                 this.com.CommandText = str;
                 this.com.ExecuteNonQuery();
             }

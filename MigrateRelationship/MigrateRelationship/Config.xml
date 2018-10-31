@@ -5,7 +5,7 @@
     <ColumnName Value="RColumn" />
   </SPColumnName>
   <JobInfo>
-    <ScanItemJob Value="false" />
+    <ScanItemJob Value="true" />
   </JobInfo>
   <AccountInfo>
     <SiteUrl Value ="https://acsdev365.sharepoint.com/sites/hshan/testSite"/>

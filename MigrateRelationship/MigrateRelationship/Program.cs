@@ -159,7 +159,7 @@ namespace MigrateRelationship
             Program.logger.Debug("Retrieve sharepoint items from {0}", folderUrl == null ? "Root Folder" : folderUrl);
             List<ListItem> itemCollection = new List<ListItem>();
             CamlQuery query = new CamlQuery() { };
-            query.ViewXml = "<View><RowLimit>4000</RowLimit></View>";
+            query.ViewXml = "<View><RowLimit>5000</RowLimit></View>";
             if (folderUrl != null)
             {
                 query.FolderServerRelativeUrl = folderUrl;
@@ -237,13 +237,11 @@ namespace MigrateRelationship
 
     class ResultInfo
     {
-        public string ListUrl;
         public string ItemId;
         public string Result;
         public string Message;
-        public ResultInfo(string listUrl, string itemId, string result, string message)
+        public ResultInfo(string itemId, string result, string message)
         {
-            this.ListUrl = listUrl;
             this.ItemId = itemId;
             this.Result = result;
             this.Message = message;
