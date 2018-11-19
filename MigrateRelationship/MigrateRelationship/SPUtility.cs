@@ -114,10 +114,14 @@ namespace MigrateRelationship
             int retryAttempts = 0;
             int backoffInterval = delay;
             if (retryCount <= 0)
+            {
                 throw new ArgumentException("Provide a retry count greater than zero.");
+            }
 
             if (delay <= 0)
+            {
                 throw new ArgumentException("Provide a delay greater than zero.");
+            }
 
             // Do while retry attempt is less than retry count
             while (retryAttempts < retryCount)
